@@ -1,0 +1,44 @@
+version: 2
+project_name: beat-exporter
+
+builds:
+  - id: beat-exporter
+    binary: beat-exporter
+    main: ./main.go
+    flags:
+      - -tags="netgo static_build"
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+      - -X github.com/prometheus/common/version.Revision={{ .FullCommit }}
+      - -X github.com/prometheus/common/version.Version={{ .Version }}
+      - -X github.com/prometheus/common/version.Branch={{ .Tag }}
+      - -X github.com/prometheus/common/version.BuildDate={{ .Date }}
+      - -X github.com/prometheus/common/version.BuildUser=goreleaser
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+dockers:
+  - image_templates:
+      - "ghcr.io/jcudit/{{ .ProjectName }}:{{ .Tag }}-amd64"
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/amd64"
+  - image_templates:
+      - "ghcr.io/jcudit/{{ .ProjectName }}:{{ .Tag }}-arm64"
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/arm64"
+    goarch: arm64
+
+docker_manifests:
+  - name_template: "ghcr.io/jcudit/{{ .ProjectName }}:{{ .Tag }}"
+    image_templates:
+      - "ghcr.io/jcudit/{{ .ProjectName }}:{{ .Tag }}-amd64"
+      - "ghcr.io/jcudit/{{ .ProjectName }}:{{ .Tag }}-arm64"
